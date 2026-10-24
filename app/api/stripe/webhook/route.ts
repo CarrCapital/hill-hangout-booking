@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { stripe, stripeConfigured } from "@/lib/stripe";
-import { markPaid } from "@/lib/db";
+import { getRequest, markPaid } from "@/lib/db";
+import { emailBookingPaid } from "@/lib/email";
 
 export const runtime = "nodejs";
 
@@ -31,8 +32,10 @@ export async function POST(req: NextRequest) {
     if (rid) {
       try {
         await markPaid(rid);
+        const r = await getRequest(rid);
+        if (r) await emailBookingPaid(r);
       } catch (err) {
-        console.error("markPaid failed", err);
+        console.error("markPaid or emailBookingPaid failed", err);
       }
     }
   }

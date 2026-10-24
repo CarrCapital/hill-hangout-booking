@@ -52,7 +52,7 @@ export default function RootLayout({
             style={{ color: "var(--ink3)" }}
           >
             <p className="m-0">
-              {POLICIES.brand.name}. {POLICIES.address}.
+              {POLICIES.brand.name}. {POLICIES.neighborhood}.
             </p>
             <p className="m-0 mt-1">
               Direct bookings only. Not operated by Airbnb or VRBO.

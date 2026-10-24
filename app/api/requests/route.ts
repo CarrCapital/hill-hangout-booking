@@ -4,6 +4,7 @@ import { getListing } from "@/lib/listings";
 import { quote, nightsBetween } from "@/lib/pricing";
 import { blockedRanges, dbConfigured, insertRequest } from "@/lib/db";
 import { resolveConfig } from "@/lib/settings";
+import { notifyHostNewRequest, emailGuestRequestReceived } from "@/lib/email";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -141,9 +142,26 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  // Email notifications land here once RESEND_API_KEY is set. Left as a stub
-  // so that nothing breaks when the key isn't present yet.
-  // TODO: send email to guest + NOTIFICATION_EMAIL via Resend.
+  // Fire-and-forget email notifications. They no-op if RESEND_API_KEY /
+  // NOTIFICATION_EMAIL aren't set, and errors inside them are swallowed so a
+  // failing SMTP never fails the request.
+  const minimal = {
+    id,
+    listing_slug: listing.slug,
+    check_in: body.check_in,
+    check_out: body.check_out,
+    guests,
+    bringing_pet: !!body.bringing_pet,
+    name,
+    email,
+    phone,
+    purpose: (body.purpose ?? "").trim(),
+    total: String(q.total),
+  };
+  await Promise.all([
+    notifyHostNewRequest(minimal),
+    emailGuestRequestReceived(minimal),
+  ]);
 
   return NextResponse.json({ id, total: q.total });
 }

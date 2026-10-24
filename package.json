@@ -10,12 +10,15 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "1.2.0",
+    "leaflet": "1.9.4",
     "next": "15.5.28",
     "react": "19.0.0",
     "react-dom": "19.0.0",
+    "resend": "4.0.1",
     "stripe": "18.1.0"
   },
   "devDependencies": {
+    "@types/leaflet": "1.9.14",
     "@types/node": "22.10.5",
     "@types/react": "19.0.3",
     "@types/react-dom": "19.0.2",

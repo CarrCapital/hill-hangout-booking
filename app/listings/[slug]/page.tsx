@@ -1,8 +1,9 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { LISTINGS } from "@/lib/listings";
+import { LISTINGS, POLICIES } from "@/lib/listings";
 import { resolveListing } from "@/lib/settings";
 import { formatMoney } from "@/lib/pricing";
+import LocationMap from "@/components/LocationMap";
 
 export function generateStaticParams() {
   return LISTINGS.map((l) => ({ slug: l.slug }));
@@ -62,6 +63,7 @@ export default async function ListingPage({
             border: "1px solid var(--line2)",
             display: "block",
           }}
+          loading="eager"
         />
       </figure>
 
@@ -78,6 +80,7 @@ export default async function ListingPage({
             key={i}
             src={p}
             alt=""
+            loading="lazy"
             style={{
               width: "100%",
               aspectRatio: "4/3",
@@ -88,7 +91,18 @@ export default async function ListingPage({
         ))}
       </div>
 
-      <div className="price-rows" style={{ marginTop: "1.8rem" }}>
+      <p
+        style={{
+          color: "var(--ink2)",
+          marginTop: "1.6rem",
+          fontSize: "1rem",
+          lineHeight: 1.7,
+        }}
+      >
+        {l.shortDescription}
+      </p>
+
+      <div className="price-rows" style={{ marginTop: "1.4rem" }}>
         <div>
           <span>Nightly</span>
           <span style={{ color: "var(--ink)" }}>{formatMoney(l.nightly)}</span>
@@ -111,7 +125,9 @@ export default async function ListingPage({
         </div>
         <div>
           <span>Size</span>
-          <span style={{ color: "var(--ink)" }}>{l.sqft.toLocaleString()} sq ft</span>
+          <span style={{ color: "var(--ink)" }}>
+            {l.sqft.toLocaleString()} sq ft
+          </span>
         </div>
         <div>
           <span>Minimum stay</span>
@@ -121,13 +137,68 @@ export default async function ListingPage({
         </div>
       </div>
 
-      <p style={{ color: "var(--ink2)", marginTop: "1.6rem" }}>
-        {l.description}
-      </p>
+      <h2
+        className="serif font-light"
+        style={{ fontSize: "1.3rem", margin: "2.2rem 0 .8rem" }}
+      >
+        About this place
+      </h2>
+      <div
+        style={{
+          color: "var(--ink2)",
+          fontSize: ".97rem",
+          lineHeight: 1.7,
+          whiteSpace: "pre-wrap",
+        }}
+      >
+        {l.longDescription}
+      </div>
 
       <h2
         className="serif font-light"
-        style={{ fontSize: "1.3rem", margin: "2rem 0 .8rem" }}
+        style={{ fontSize: "1.3rem", margin: "2.2rem 0 .8rem" }}
+      >
+        Why guests love this home
+      </h2>
+      <ul
+        style={{
+          color: "var(--ink2)",
+          padding: 0,
+          listStyle: "none",
+          margin: 0,
+          display: "grid",
+          gap: ".35rem",
+          fontSize: ".95rem",
+        }}
+      >
+        {l.loveReasons.map((r) => (
+          <li
+            key={r}
+            style={{
+              borderBottom: "1px solid var(--line2)",
+              padding: ".45rem 0",
+            }}
+          >
+            ✓ {r}
+          </li>
+        ))}
+      </ul>
+
+      <h2
+        className="serif font-light"
+        style={{ fontSize: "1.3rem", margin: "2.2rem 0 .8rem" }}
+      >
+        Where you'll be
+      </h2>
+      <LocationMap
+        lat={POLICIES.approxLat}
+        lng={POLICIES.approxLng}
+        neighborhood={POLICIES.neighborhood}
+      />
+
+      <h2
+        className="serif font-light"
+        style={{ fontSize: "1.3rem", margin: "2.2rem 0 .8rem" }}
       >
         Amenities
       </h2>
@@ -138,15 +209,17 @@ export default async function ListingPage({
           listStyle: "none",
           margin: 0,
           display: "grid",
-          gridTemplateColumns: "1fr",
-          gap: ".4rem",
+          gap: ".35rem",
           fontSize: ".93rem",
         }}
       >
         {l.amenities.map((a) => (
           <li
             key={a}
-            style={{ borderBottom: "1px solid var(--line2)", padding: ".4rem 0" }}
+            style={{
+              borderBottom: "1px solid var(--line2)",
+              padding: ".45rem 0",
+            }}
           >
             {a}
           </li>
@@ -155,7 +228,7 @@ export default async function ListingPage({
 
       <h2
         className="serif font-light"
-        style={{ fontSize: "1.3rem", margin: "2rem 0 .8rem" }}
+        style={{ fontSize: "1.3rem", margin: "2.2rem 0 .8rem" }}
       >
         House rules
       </h2>
@@ -166,14 +239,17 @@ export default async function ListingPage({
           listStyle: "none",
           margin: 0,
           display: "grid",
-          gap: ".4rem",
+          gap: ".35rem",
           fontSize: ".93rem",
         }}
       >
         {policies.houseRules.map((r) => (
           <li
             key={r}
-            style={{ borderBottom: "1px solid var(--line2)", padding: ".4rem 0" }}
+            style={{
+              borderBottom: "1px solid var(--line2)",
+              padding: ".45rem 0",
+            }}
           >
             {r}
           </li>
