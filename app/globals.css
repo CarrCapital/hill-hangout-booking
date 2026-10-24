@@ -1,0 +1,130 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+  --paper: #FAF9F7;
+  --paper2: #F2F0EB;
+  --ink: #1B1B19;
+  --ink2: #5D5B55;
+  --ink3: #93908A;
+  --line: #E3E0DA;
+  --line2: #EDEBE6;
+  --accent: #3F5145;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #131312;
+    --paper2: #1B1B19;
+    --ink: #EDEBE6;
+    --ink2: #A9A69E;
+    --ink3: #7E7B75;
+    --line: #2C2C29;
+    --line2: #232320;
+    --accent: #93B39A;
+  }
+}
+
+html { -webkit-text-size-adjust: 100%; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font-family: "Hanken Grotesk", ui-sans-serif, system-ui, sans-serif;
+  font-weight: 350;
+  line-height: 1.62;
+  -webkit-font-smoothing: antialiased;
+}
+
+a { color: inherit; }
+input, select, textarea { color: inherit; background: transparent; }
+*:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+
+.serif { font-family: "Newsreader", Georgia, "Times New Roman", serif; }
+
+.wrap { width: 100%; max-width: 42rem; margin: 0 auto; padding: 0 1.5rem; }
+.wide { width: 100%; max-width: 60rem; margin: 0 auto; padding: 0 1.5rem; }
+
+.hr { width: 2.6rem; height: 1px; background: var(--ink3); border: 0; margin: 1.9rem auto; }
+
+.cardline { border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+
+.pill {
+  display: inline-flex; align-items: center; gap: .3rem;
+  font-size: .72rem; letter-spacing: .06em; color: var(--ink3);
+  border: 1px solid var(--line); border-radius: 999px;
+  padding: .22rem .62rem;
+}
+
+.btn {
+  display: inline-flex; justify-content: center; align-items: center;
+  background: var(--ink); color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 999px; padding: .72rem 1.4rem;
+  font-family: "Hanken Grotesk", sans-serif;
+  font-size: .9rem; letter-spacing: .02em; cursor: pointer;
+  transition: opacity .15s ease;
+}
+.btn:hover { opacity: .88; }
+.btn:disabled { opacity: .5; cursor: not-allowed; }
+.btn-ghost {
+  background: transparent; color: var(--ink);
+  border-color: var(--line);
+}
+.btn-ghost:hover { border-color: var(--ink); }
+
+label.field {
+  display: block; margin: 0 0 1.1rem;
+}
+label.field > span.lbl {
+  display: block; font-size: .78rem; color: var(--ink3);
+  letter-spacing: .04em; margin-bottom: .35rem;
+}
+label.field input, label.field select, label.field textarea {
+  width: 100%; border: 0; border-bottom: 1px solid var(--line);
+  padding: .55rem 0 .55rem; font-size: 1rem; font-family: inherit;
+}
+label.field input:focus, label.field select:focus, label.field textarea:focus {
+  outline: none; border-bottom-color: var(--accent);
+}
+
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+@media (max-width: 30rem) { .row2 { grid-template-columns: 1fr; gap: 0; } }
+
+.price-rows > div {
+  display: flex; justify-content: space-between; padding: .5rem 0;
+  border-bottom: 1px solid var(--line2); font-size: .92rem;
+  color: var(--ink2);
+}
+.price-rows > div.total {
+  color: var(--ink); font-family: "Newsreader", serif;
+  font-size: 1.15rem; border-bottom: 0; padding-top: .8rem;
+}
+
+.listingcard {
+  display: block; text-decoration: none; color: inherit;
+  border: 1px solid var(--line); background: var(--paper);
+  overflow: hidden; transition: transform .18s ease, border-color .18s ease;
+}
+.listingcard:hover { border-color: var(--ink3); transform: translateY(-2px); }
+.listingcard .photo { aspect-ratio: 4/3; background: var(--paper2); overflow: hidden; }
+.listingcard .photo img { width: 100%; height: 100%; object-fit: cover; }
+.listingcard .body { padding: 1.1rem 1.2rem 1.3rem; }
+
+.grid3 { display: grid; grid-template-columns: 1fr; gap: 1.4rem; margin: 2rem 0 3rem; }
+@media (min-width: 44rem) { .grid3 { grid-template-columns: repeat(3, 1fr); } }
+
+.statepill { display: inline-block; padding: .22rem .55rem; border-radius: 999px;
+  font-size: .72rem; letter-spacing: .04em; }
+.state-pending  { background: #e7e4dd; color: #5a5649; }
+.state-approved { background: #c7dbcf; color: #28452f; }
+.state-rejected { background: #e5c9c3; color: #6a2a21; }
+.state-paid     { background: #3F5145; color: #FAF9F7; }
+.state-expired  { background: #d8d6d1; color: #6b6760; }
+@media (prefers-color-scheme: dark) {
+  .state-pending  { background: #302e29; color: #cfcbc1; }
+  .state-approved { background: #2a3a2f; color: #a9c7b1; }
+  .state-rejected { background: #3b2622; color: #d6a69f; }
+  .state-expired  { background: #28272a; color: #a5a39e; }
+}
