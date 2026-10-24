@@ -256,10 +256,25 @@ export default async function ListingPage({
         ))}
       </ul>
 
-      <div style={{ marginTop: "2rem" }}>
+      <div
+        style={{
+          marginTop: "2rem",
+          display: "flex",
+          gap: ".6rem",
+          flexWrap: "wrap",
+        }}
+      >
         <Link href={`/book/${l.slug}`} className="btn">
           Request these dates
         </Link>
+        <a
+          href={`https://www.airbnb.com/rooms/${l.airbnbId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="btn btn-ghost"
+        >
+          Read reviews on Airbnb
+        </a>
       </div>
 
       <p

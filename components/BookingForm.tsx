@@ -11,11 +11,22 @@ type Props = {
   listing: Listing;
   blocked: BlockedRange[];
   policies: typeof POLICIES;
+  initialFrom?: string | null;
+  initialTo?: string | null;
 };
 
-export default function BookingForm({ listing, blocked, policies }: Props) {
+export default function BookingForm({
+  listing,
+  blocked,
+  policies,
+  initialFrom,
+  initialTo,
+}: Props) {
   const router = useRouter();
-  const [range, setRange] = useState<DateRange>({ from: null, to: null });
+  const [range, setRange] = useState<DateRange>({
+    from: initialFrom ?? null,
+    to: initialTo ?? null,
+  });
   const [guests, setGuests] = useState(2);
   const [pet, setPet] = useState(false);
   const [name, setName] = useState("");

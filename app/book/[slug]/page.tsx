@@ -10,12 +10,20 @@ export function generateStaticParams() {
   return LISTINGS.map((l) => ({ slug: l.slug }));
 }
 
+type SP = { from?: string; to?: string };
+
+function isDate(s: string | undefined): s is string {
+  return typeof s === "string" && /^\d{4}-\d{2}-\d{2}$/.test(s);
+}
+
 export default async function BookPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<SP>;
 }) {
-  const { slug } = await params;
+  const [{ slug }, sp] = await Promise.all([params, searchParams]);
   const { listing: l, policies } = await resolveListing(slug);
   if (!l) notFound();
 
@@ -31,6 +39,9 @@ export default async function BookPage({
     dbWarning =
       "Database not connected yet. The form still works for testing, but requests will not persist. Add Vercel Postgres (Neon) in the dashboard to turn it on.";
   }
+
+  const initialFrom = isDate(sp.from) ? sp.from : null;
+  const initialTo = isDate(sp.to) ? sp.to : null;
 
   return (
     <div className="wrap" style={{ padding: "2.4rem 0 3rem" }}>
@@ -67,7 +78,13 @@ export default async function BookPage({
         </div>
       )}
 
-      <BookingForm listing={l} blocked={blocked} policies={policies} />
+      <BookingForm
+        listing={l}
+        blocked={blocked}
+        policies={policies}
+        initialFrom={initialFrom}
+        initialTo={initialTo}
+      />
     </div>
   );
 }
