@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
-import {
-  getListing,
-  POLICIES,
-} from "@/lib/listings";
+import { getListing } from "@/lib/listings";
 import { quote, nightsBetween } from "@/lib/pricing";
 import { blockedRanges, dbConfigured, insertRequest } from "@/lib/db";
+import { resolveConfig } from "@/lib/settings";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -34,7 +32,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Invalid JSON." }, { status: 400 });
   }
 
-  const listing = body.listing_slug ? getListing(body.listing_slug) : undefined;
+  const cfg = await resolveConfig();
+  const listing = body.listing_slug
+    ? cfg.listings.find((l) => l.slug === body.listing_slug) ??
+      getListing(body.listing_slug)
+    : undefined;
   if (!listing) {
     return NextResponse.json({ error: "Unknown listing." }, { status: 400 });
   }
@@ -45,9 +47,9 @@ export async function POST(req: NextRequest) {
     );
   }
   const nights = nightsBetween(body.check_in, body.check_out);
-  if (nights < POLICIES.minimumNights) {
+  if (nights < cfg.policies.minimumNights) {
     return NextResponse.json(
-      { error: `Minimum stay is ${POLICIES.minimumNights} nights.` },
+      { error: `Minimum stay is ${cfg.policies.minimumNights} nights.` },
       { status: 400 },
     );
   }
@@ -94,7 +96,13 @@ export async function POST(req: NextRequest) {
     }
   }
 
-  const q = quote(listing, body.check_in, body.check_out, !!body.bringing_pet);
+  const q = quote(
+    listing,
+    body.check_in,
+    body.check_out,
+    !!body.bringing_pet,
+    cfg.policies,
+  );
   const id = randomUUID();
 
   if (dbConfigured()) {

@@ -1,11 +1,14 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { getListing, LISTINGS, POLICIES } from "@/lib/listings";
+import { LISTINGS } from "@/lib/listings";
+import { resolveListing } from "@/lib/settings";
 import { formatMoney } from "@/lib/pricing";
 
 export function generateStaticParams() {
   return LISTINGS.map((l) => ({ slug: l.slug }));
 }
+
+export const dynamic = "force-dynamic";
 
 export default async function ListingPage({
   params,
@@ -13,7 +16,7 @@ export default async function ListingPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const l = getListing(slug);
+  const { listing: l, policies } = await resolveListing(slug);
   if (!l) notFound();
 
   return (
@@ -62,6 +65,29 @@ export default async function ListingPage({
         />
       </figure>
 
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fill, minmax(10rem, 1fr))",
+          gap: ".5rem",
+          marginTop: ".55rem",
+        }}
+      >
+        {l.photos.slice(1).map((p, i) => (
+          <img
+            key={i}
+            src={p}
+            alt=""
+            style={{
+              width: "100%",
+              aspectRatio: "4/3",
+              objectFit: "cover",
+              border: "1px solid var(--line2)",
+            }}
+          />
+        ))}
+      </div>
+
       <div className="price-rows" style={{ marginTop: "1.8rem" }}>
         <div>
           <span>Nightly</span>
@@ -80,14 +106,79 @@ export default async function ListingPage({
           <span style={{ color: "var(--ink)" }}>{l.bathrooms}</span>
         </div>
         <div>
+          <span>Beds</span>
+          <span style={{ color: "var(--ink)" }}>{l.beds}</span>
+        </div>
+        <div>
+          <span>Size</span>
+          <span style={{ color: "var(--ink)" }}>{l.sqft.toLocaleString()} sq ft</span>
+        </div>
+        <div>
           <span>Minimum stay</span>
           <span style={{ color: "var(--ink)" }}>
-            {POLICIES.minimumNights} nights
+            {policies.minimumNights} nights
           </span>
         </div>
       </div>
 
-      <p style={{ color: "var(--ink2)", marginTop: "1.6rem" }}>{l.description}</p>
+      <p style={{ color: "var(--ink2)", marginTop: "1.6rem" }}>
+        {l.description}
+      </p>
+
+      <h2
+        className="serif font-light"
+        style={{ fontSize: "1.3rem", margin: "2rem 0 .8rem" }}
+      >
+        Amenities
+      </h2>
+      <ul
+        style={{
+          color: "var(--ink2)",
+          padding: 0,
+          listStyle: "none",
+          margin: 0,
+          display: "grid",
+          gridTemplateColumns: "1fr",
+          gap: ".4rem",
+          fontSize: ".93rem",
+        }}
+      >
+        {l.amenities.map((a) => (
+          <li
+            key={a}
+            style={{ borderBottom: "1px solid var(--line2)", padding: ".4rem 0" }}
+          >
+            {a}
+          </li>
+        ))}
+      </ul>
+
+      <h2
+        className="serif font-light"
+        style={{ fontSize: "1.3rem", margin: "2rem 0 .8rem" }}
+      >
+        House rules
+      </h2>
+      <ul
+        style={{
+          color: "var(--ink2)",
+          padding: 0,
+          listStyle: "none",
+          margin: 0,
+          display: "grid",
+          gap: ".4rem",
+          fontSize: ".93rem",
+        }}
+      >
+        {policies.houseRules.map((r) => (
+          <li
+            key={r}
+            style={{ borderBottom: "1px solid var(--line2)", padding: ".4rem 0" }}
+          >
+            {r}
+          </li>
+        ))}
+      </ul>
 
       <div style={{ marginTop: "2rem" }}>
         <Link href={`/book/${l.slug}`} className="btn">
@@ -103,6 +194,7 @@ export default async function ListingPage({
         }}
       >
         You'll pick dates on the next page. Request first, pay once approved.
+        Cancellation: {policies.cancellation}
       </p>
     </div>
   );

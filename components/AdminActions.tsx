@@ -3,9 +3,22 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export default function AdminActions({ id }: { id: string }) {
+type Props = {
+  id: string;
+  status: string;
+  paymentUrl: string | null;
+  stripeReady: boolean;
+};
+
+export default function AdminActions({
+  id,
+  status,
+  paymentUrl,
+  stripeReady,
+}: Props) {
   const router = useRouter();
-  const [busy, setBusy] = useState<"approve" | "reject" | null>(null);
+  const [busy, setBusy] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
 
   async function decide(action: "approve" | "reject") {
     setBusy(action);
@@ -20,24 +33,62 @@ export default function AdminActions({ id }: { id: string }) {
     router.refresh();
   }
 
-  return (
-    <div style={{ display: "flex", gap: ".4rem" }}>
-      <button
-        onClick={() => decide("approve")}
-        disabled={!!busy}
-        className="btn"
-        style={{ padding: ".4rem .9rem", fontSize: ".78rem" }}
-      >
-        {busy === "approve" ? "…" : "Approve"}
-      </button>
-      <button
-        onClick={() => decide("reject")}
-        disabled={!!busy}
-        className="btn btn-ghost"
-        style={{ padding: ".4rem .9rem", fontSize: ".78rem" }}
-      >
-        {busy === "reject" ? "…" : "Reject"}
-      </button>
-    </div>
-  );
+  async function copyLink() {
+    if (!paymentUrl) return;
+    await navigator.clipboard.writeText(paymentUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 1500);
+  }
+
+  if (status === "pending") {
+    return (
+      <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
+        <button
+          onClick={() => decide("approve")}
+          disabled={!!busy}
+          className="btn"
+          style={{ padding: ".4rem .9rem", fontSize: ".78rem" }}
+        >
+          {busy === "approve" ? "…" : stripeReady ? "Approve + payment link" : "Approve"}
+        </button>
+        <button
+          onClick={() => decide("reject")}
+          disabled={!!busy}
+          className="btn btn-ghost"
+          style={{ padding: ".4rem .9rem", fontSize: ".78rem" }}
+        >
+          {busy === "reject" ? "…" : "Reject"}
+        </button>
+      </div>
+    );
+  }
+
+  if (status === "approved" && paymentUrl) {
+    return (
+      <div style={{ display: "flex", gap: ".4rem", flexWrap: "wrap" }}>
+        <button
+          onClick={copyLink}
+          className="btn btn-ghost"
+          style={{ padding: ".4rem .9rem", fontSize: ".78rem" }}
+        >
+          {copied ? "Copied" : "Copy pay link"}
+        </button>
+        <a
+          href={paymentUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="btn btn-ghost"
+          style={{
+            padding: ".4rem .9rem",
+            fontSize: ".78rem",
+            textDecoration: "none",
+          }}
+        >
+          Open
+        </a>
+      </div>
+    );
+  }
+
+  return null;
 }

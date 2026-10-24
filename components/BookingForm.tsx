@@ -5,37 +5,17 @@ import { useRouter } from "next/navigation";
 import type { Listing } from "@/lib/listings";
 import { POLICIES } from "@/lib/listings";
 import { quote, formatMoney } from "@/lib/pricing";
+import Calendar, { type DateRange, type BlockedRange } from "./Calendar";
 
 type Props = {
   listing: Listing;
-  blocked: Array<{ check_in: string; check_out: string }>;
+  blocked: BlockedRange[];
+  policies: typeof POLICIES;
 };
 
-function today(): string {
-  const d = new Date();
-  return d.toISOString().slice(0, 10);
-}
-function addDays(iso: string, n: number): string {
-  const d = new Date(iso + "T00:00:00");
-  d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0, 10);
-}
-
-function overlaps(
-  a: string,
-  b: string,
-  blocked: Array<{ check_in: string; check_out: string }>,
-): boolean {
-  // Simple interval overlap: [a, b) vs [in, out)
-  return blocked.some((r) => a < r.check_out && b > r.check_in);
-}
-
-export default function BookingForm({ listing, blocked }: Props) {
+export default function BookingForm({ listing, blocked, policies }: Props) {
   const router = useRouter();
-  const [checkIn, setCheckIn] = useState(addDays(today(), 14));
-  const [checkOut, setCheckOut] = useState(
-    addDays(today(), 14 + POLICIES.minimumNights),
-  );
+  const [range, setRange] = useState<DateRange>({ from: null, to: null });
   const [guests, setGuests] = useState(2);
   const [pet, setPet] = useState(false);
   const [name, setName] = useState("");
@@ -46,25 +26,22 @@ export default function BookingForm({ listing, blocked }: Props) {
   const [error, setError] = useState<string | null>(null);
 
   const q = useMemo(
-    () => quote(listing, checkIn, checkOut, pet),
-    [listing, checkIn, checkOut, pet],
+    () =>
+      range.from && range.to
+        ? quote(listing, range.from, range.to, pet, policies)
+        : null,
+    [listing, range, pet, policies],
   );
-
-  const belowMin = q.nights > 0 && q.nights < POLICIES.minimumNights;
-  const dateProblem =
-    q.nights <= 0
-      ? "Choose a checkout after your check-in."
-      : belowMin
-        ? `Minimum stay is ${POLICIES.minimumNights} nights.`
-        : overlaps(checkIn, checkOut, blocked)
-          ? "Some of these nights are already booked. Please pick different dates."
-          : null;
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (dateProblem) {
-      setError(dateProblem);
+    if (!range.from || !range.to) {
+      setError("Pick your check-in and check-out dates on the calendar.");
+      return;
+    }
+    if (!q || q.nights < policies.minimumNights) {
+      setError(`Minimum stay is ${policies.minimumNights} nights.`);
       return;
     }
     if (guests > listing.maxGuests) {
@@ -78,8 +55,8 @@ export default function BookingForm({ listing, blocked }: Props) {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           listing_slug: listing.slug,
-          check_in: checkIn,
-          check_out: checkOut,
+          check_in: range.from,
+          check_out: range.to,
           guests,
           bringing_pet: pet,
           name,
@@ -101,32 +78,40 @@ export default function BookingForm({ listing, blocked }: Props) {
 
   return (
     <form onSubmit={submit}>
-      <div className="row2">
-        <label className="field">
-          <span className="lbl">Check in</span>
-          <input
-            type="date"
-            value={checkIn}
-            min={today()}
-            onChange={(e) => {
-              const v = e.target.value;
-              setCheckIn(v);
-              if (v >= checkOut) setCheckOut(addDays(v, POLICIES.minimumNights));
-            }}
-          />
-        </label>
-        <label className="field">
-          <span className="lbl">Check out</span>
-          <input
-            type="date"
-            value={checkOut}
-            min={addDays(checkIn, 1)}
-            onChange={(e) => setCheckOut(e.target.value)}
-          />
-        </label>
-      </div>
+      <h3
+        className="serif"
+        style={{ fontSize: "1rem", margin: "0 0 .7rem", color: "var(--ink3)" }}
+      >
+        Choose dates
+      </h3>
+      <Calendar
+        value={range}
+        onChange={setRange}
+        blocked={blocked}
+        minimumNights={policies.minimumNights}
+      />
 
-      <div className="row2">
+      {range.from && (
+        <p
+          className="serif"
+          style={{
+            color: "var(--ink2)",
+            margin: "1rem 0 0",
+            fontSize: ".92rem",
+          }}
+        >
+          {range.from}
+          {range.to ? ` → ${range.to}` : " → pick checkout"}
+          {q && q.nights > 0 && (
+            <span style={{ color: "var(--ink3)" }}>
+              {" "}
+              · {q.nights} night{q.nights === 1 ? "" : "s"}
+            </span>
+          )}
+        </p>
+      )}
+
+      <div className="row2" style={{ marginTop: "1.4rem" }}>
         <label className="field">
           <span className="lbl">Guests</span>
           <select
@@ -149,41 +134,48 @@ export default function BookingForm({ listing, blocked }: Props) {
             onChange={(e) => setPet(e.target.value === "yes")}
           >
             <option value="no">No</option>
-            <option value="yes">Yes (pet fee applies, must be approved)</option>
+            <option value="yes">
+              Yes ({formatMoney(policies.petFee)} per stay, must be approved)
+            </option>
           </select>
         </label>
       </div>
 
-      <div
-        className="price-rows"
-        style={{ margin: "1rem 0 1.6rem", borderTop: "1px solid var(--line)" }}
-      >
-        <div>
-          <span>
-            {q.nights || 0} night{q.nights === 1 ? "" : "s"} ×{" "}
-            {formatMoney(listing.nightly)}
-          </span>
-          <span>{formatMoney(q.subtotal)}</span>
-        </div>
-        <div>
-          <span>Cleaning fee</span>
-          <span>{formatMoney(q.cleaningFee)}</span>
-        </div>
-        {pet && (
+      {q && q.nights > 0 && (
+        <div
+          className="price-rows"
+          style={{
+            margin: "0 0 1.6rem",
+            borderTop: "1px solid var(--line)",
+          }}
+        >
           <div>
-            <span>Pet fee</span>
-            <span>{formatMoney(q.petFee)}</span>
+            <span>
+              {q.nights} night{q.nights === 1 ? "" : "s"} ×{" "}
+              {formatMoney(listing.nightly)}
+            </span>
+            <span>{formatMoney(q.subtotal)}</span>
           </div>
-        )}
-        <div>
-          <span>DC tax ({(POLICIES.taxRate * 100).toFixed(2)}%)</span>
-          <span>{formatMoney(q.tax)}</span>
+          <div>
+            <span>Cleaning fee</span>
+            <span>{formatMoney(q.cleaningFee)}</span>
+          </div>
+          {pet && (
+            <div>
+              <span>Pet fee</span>
+              <span>{formatMoney(q.petFee)}</span>
+            </div>
+          )}
+          <div>
+            <span>DC tax ({(policies.taxRate * 100).toFixed(2)}%)</span>
+            <span>{formatMoney(q.tax)}</span>
+          </div>
+          <div className="total">
+            <span>Total</span>
+            <span>{formatMoney(q.total)}</span>
+          </div>
         </div>
-        <div className="total">
-          <span>Total</span>
-          <span>{formatMoney(q.total)}</span>
-        </div>
-      </div>
+      )}
 
       <h3
         className="serif"
@@ -242,11 +234,7 @@ export default function BookingForm({ listing, blocked }: Props) {
         </p>
       )}
 
-      <button
-        type="submit"
-        className="btn"
-        disabled={submitting || !!dateProblem}
-      >
+      <button type="submit" className="btn" disabled={submitting}>
         {submitting ? "Sending…" : "Send request"}
       </button>
       <p
@@ -256,8 +244,8 @@ export default function BookingForm({ listing, blocked }: Props) {
           marginTop: ".9rem",
         }}
       >
-        No payment now. You'll hear back within {POLICIES.approvalWindowHours}{" "}
-        hours.
+        No payment now. You'll hear back within {policies.approvalWindowHours}{" "}
+        hours. Primary guest must be {POLICIES.minBookingAge} or older.
       </p>
     </form>
   );

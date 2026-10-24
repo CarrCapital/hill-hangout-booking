@@ -1,8 +1,12 @@
 import Link from "next/link";
-import { LISTINGS, POLICIES } from "@/lib/listings";
 import { formatMoney } from "@/lib/pricing";
+import { resolveConfig } from "@/lib/settings";
 
-export default function HomePage() {
+export const dynamic = "force-dynamic";
+
+export default async function HomePage() {
+  const { listings, policies } = await resolveConfig();
+
   return (
     <div>
       <section className="wide text-center" style={{ padding: "4.5rem 0 2rem" }}>
@@ -10,7 +14,7 @@ export default function HomePage() {
           className="serif italic m-0"
           style={{ color: "var(--ink3)", fontSize: ".92rem" }}
         >
-          {POLICIES.brand.tagline}
+          {policies.brand.tagline}
         </p>
         <h1
           className="serif font-light m-0"
@@ -34,9 +38,9 @@ export default function HomePage() {
             marginRight: "auto",
           }}
         >
-          Three ways to stay. One upstairs home, one basement suite, or the
-          whole house together. Pick dates, send a request, hear back within{" "}
-          {POLICIES.approvalWindowHours} hours.
+          Three ways to stay. One upstairs home, one two-bedroom suite on the
+          lower level, or the whole house together. Pick dates, send a request,
+          hear back within {policies.approvalWindowHours} hours.
         </p>
         <hr className="hr" />
       </section>
@@ -46,22 +50,16 @@ export default function HomePage() {
           Choose a stay
         </h2>
         <div className="grid3">
-          {LISTINGS.map((l) => (
+          {listings.map((l) => (
             <Link key={l.slug} href={`/listings/${l.slug}`} className="listingcard">
               <div className="photo">
                 <img src={l.heroPhoto} alt={l.name} />
               </div>
               <div className="body">
-                <div
-                  className="pill"
-                  style={{ marginBottom: ".6rem" }}
-                >
+                <div className="pill" style={{ marginBottom: ".6rem" }}>
                   sleeps {l.maxGuests}
                 </div>
-                <div
-                  className="serif"
-                  style={{ fontSize: "1.2rem", lineHeight: 1.25 }}
-                >
+                <div className="serif" style={{ fontSize: "1.2rem", lineHeight: 1.25 }}>
                   {l.shortName}
                 </div>
                 <p
@@ -76,10 +74,7 @@ export default function HomePage() {
                 </p>
                 <p
                   className="m-0 serif"
-                  style={{
-                    marginTop: ".9rem",
-                    fontSize: "1.05rem",
-                  }}
+                  style={{ marginTop: ".9rem", fontSize: "1.05rem" }}
                 >
                   {formatMoney(l.nightly)}
                   <span
@@ -99,11 +94,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section
-        id="house"
-        className="wrap"
-        style={{ padding: "3rem 0" }}
-      >
+      <section id="house" className="wrap" style={{ padding: "3rem 0" }}>
         <h2 className="serif font-light" style={{ fontSize: "1.8rem", margin: 0 }}>
           The house
         </h2>
@@ -114,8 +105,9 @@ export default function HomePage() {
           entrances, used separately or combined for larger groups.
         </p>
         <p style={{ color: "var(--ink2)" }}>
-          Rooftop with a view of the Capitol dome. Washer and dryer. Fast
-          Wi-Fi. Full kitchens on both floors.
+          Rooftop with a view of the Capitol dome, open 7 AM to 11 PM. Hot tub,
+          grill, outdoor dining, projector screen for movie nights. Washer and
+          dryer. Fast Wi-Fi. Full kitchens on both floors.
         </p>
       </section>
 
@@ -126,40 +118,44 @@ export default function HomePage() {
         <div style={{ marginTop: "1.2rem" }} className="price-rows">
           <div>
             <span>Check in</span>
-            <span style={{ color: "var(--ink)" }}>{POLICIES.checkInTime}</span>
+            <span style={{ color: "var(--ink)" }}>{policies.checkInTime}</span>
           </div>
           <div>
             <span>Check out</span>
-            <span style={{ color: "var(--ink)" }}>{POLICIES.checkOutTime}</span>
+            <span style={{ color: "var(--ink)" }}>{policies.checkOutTime}</span>
           </div>
           <div>
             <span>Minimum stay</span>
             <span style={{ color: "var(--ink)" }}>
-              {POLICIES.minimumNights} nights
+              {policies.minimumNights} nights
             </span>
           </div>
           <div>
             <span>Cleaning fee</span>
             <span style={{ color: "var(--ink)" }}>
-              {formatMoney(POLICIES.cleaningFee)}
+              {formatMoney(policies.cleaningFee)}
             </span>
           </div>
           <div>
             <span>DC tax</span>
             <span style={{ color: "var(--ink)" }}>
-              {(POLICIES.taxRate * 100).toFixed(2)}%
+              {(policies.taxRate * 100).toFixed(2)}%
             </span>
           </div>
           <div>
             <span>Pets</span>
             <span style={{ color: "var(--ink)" }}>
-              {formatMoney(POLICIES.petFee)} per stay, must be approved
+              {formatMoney(policies.petFee)} per stay, must be approved
             </span>
+          </div>
+          <div>
+            <span>Primary guest age</span>
+            <span style={{ color: "var(--ink)" }}>{policies.minBookingAge}+</span>
           </div>
           <div>
             <span>Approval window</span>
             <span style={{ color: "var(--ink)" }}>
-              {POLICIES.approvalWindowHours} hours
+              {policies.approvalWindowHours} hours
             </span>
           </div>
         </div>
@@ -170,7 +166,7 @@ export default function HomePage() {
             marginTop: "1.2rem",
           }}
         >
-          Cancellation: {POLICIES.cancellation}
+          Cancellation: {policies.cancellation}
         </p>
       </section>
     </div>

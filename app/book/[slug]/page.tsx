@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { getListing, LISTINGS } from "@/lib/listings";
 import { blockedRanges, dbConfigured } from "@/lib/db";
+import { resolveListing } from "@/lib/settings";
 import BookingForm from "@/components/BookingForm";
+import { LISTINGS } from "@/lib/listings";
 
 export const dynamic = "force-dynamic";
 
@@ -15,7 +16,7 @@ export default async function BookPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const l = getListing(slug);
+  const { listing: l, policies } = await resolveListing(slug);
   if (!l) notFound();
 
   let blocked: Array<{ check_in: string; check_out: string }> = [];
@@ -28,7 +29,7 @@ export default async function BookPage({
     }
   } else {
     dbWarning =
-      "Database not connected yet. The form still works for testing, but requests will not persist. Add Vercel Postgres in the dashboard to turn it on.";
+      "Database not connected yet. The form still works for testing, but requests will not persist. Add Vercel Postgres (Neon) in the dashboard to turn it on.";
   }
 
   return (
@@ -66,7 +67,7 @@ export default async function BookPage({
         </div>
       )}
 
-      <BookingForm listing={l} blocked={blocked} />
+      <BookingForm listing={l} blocked={blocked} policies={policies} />
     </div>
   );
 }
